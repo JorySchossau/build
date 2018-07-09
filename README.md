@@ -1,15 +1,16 @@
 # build
 custom c/c++ build system written in c fixing what I don't like about ninja. (actually, it's in Nim!)
+It's easy, even for large projects!: `./build topLevelMain.cpp -o MyApp.exe`
 
 ### Features
 
 * Mac/Win/Linux C/C++ build tool
-* Provided as C source code
-* Only a C compmiler is needed
 * Automatically discovers dependencies fast!
 * Recompiles only necessary dependencies based on source changes
-* Works with command line Visual Studio, GCC, Clang, whichever is available
 * Performs parallel builds based on total available cores
+* Automatically Discovers and uses the available compiler: Visual Studio, GCC, Clang, whichever is available
+* Provided as C source code
+* Only a C compmiler is needed
 
 ### QuickStart
 
