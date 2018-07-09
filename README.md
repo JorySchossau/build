@@ -1,5 +1,5 @@
 # build
-custom c/c++ build system written in c* fixing what I don't like about ninja. (* actually, in Nim!)
+custom c/c++ build system written in c fixing what I don't like about ninja. (actually, it's in Nim!)
 
 ### Features
 
