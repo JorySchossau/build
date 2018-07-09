@@ -5,7 +5,6 @@ import strformat
 import locks
 import osproc
 import ospaths ## changeFileExt
-import nre
 import os ## paramStr, walkFiles, sleep
 ## TODO: rename flags to cflags
 ## TODO: rename linkFlags to lflags

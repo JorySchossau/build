@@ -35,10 +35,10 @@ struct tySequence_sM4lkSb7zS6F7OVMvW9cffQ {
 };
 static N_INLINE(NI, find_sPsD5Eb3qBZqwDJ6Yy4sNQcligen)(tySequence_sM4lkSb7zS6F7OVMvW9cffQ* a, NimStringDesc* item);
 static N_INLINE(NIM_BOOL, eqStrings)(NimStringDesc* a, NimStringDesc* b);
-static N_INLINE(NIM_BOOL, equalMem_fmeFeLBvgmAHG9bC8ETS9bYQnre)(void* a, void* b, NI size);
+static N_INLINE(NIM_BOOL, equalMem_fmeFeLBvgmAHG9bC8ETS9bYQsystem)(void* a, void* b, NI size);
 N_LIB_PRIVATE N_NIMCALL(void, del_nEOy5yOvCWmx9aoa9cBpVf9cQ)(tySequence_sM4lkSb7zS6F7OVMvW9cffQ** x, NI i);
 
-static N_INLINE(NIM_BOOL, equalMem_fmeFeLBvgmAHG9bC8ETS9bYQnre)(void* a, void* b, NI size) {
+static N_INLINE(NIM_BOOL, equalMem_fmeFeLBvgmAHG9bC8ETS9bYQsystem)(void* a, void* b, NI size) {
 	NIM_BOOL result;
 	int T1_;
 	result = (NIM_BOOL)0;
@@ -73,7 +73,7 @@ static N_INLINE(NIM_BOOL, eqStrings)(NimStringDesc* a, NimStringDesc* b) {
 	T11_ = (NIM_BOOL)0;
 	T11_ = ((*a).Sup.len == (*b).Sup.len);
 	if (!(T11_)) goto LA12_;
-	T11_ = equalMem_fmeFeLBvgmAHG9bC8ETS9bYQnre(((void*) ((*a).data)), ((void*) ((*b).data)), ((NI) ((*a).Sup.len)));
+	T11_ = equalMem_fmeFeLBvgmAHG9bC8ETS9bYQsystem(((void*) ((*a).data)), ((void*) ((*b).data)), ((NI) ((*a).Sup.len)));
 	LA12_: ;
 	result = T11_;
 	goto BeforeRet_;

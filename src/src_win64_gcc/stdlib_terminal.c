@@ -66,11 +66,11 @@ NI hStderr_6C9cOGHD37RMptVLFSz9ckEQ;
 NI hStdoutTemp_Frgc1hZhHtHmhQpuiOhypw;
 extern tyProc_zP2zGemcuVRvOUE82f9a0Pw Dl_220620_;
 static void* TM_CN3raB9atujkEiPpxYAdlgQ_2;
-tyProc_oew1DfaGl5XhHmnBK0HYXQ Dl_335439_;
-tyProc_uryidYWkntM7ddjZSyxvyQ Dl_335449_;
+tyProc_oew1DfaGl5XhHmnBK0HYXQ Dl_317439_;
+tyProc_uryidYWkntM7ddjZSyxvyQ Dl_317449_;
 NI hStderrTemp_lkKJFEg9bMgFJ9bv6dAcceSQ;
 NI16 oldStdoutAttr_vkHOZle9bmebv77fjQpEGqw;
-tyProc_vjGHiWUJwFzOgSxDffBb6Q Dl_335451_;
+tyProc_vjGHiWUJwFzOgSxDffBb6Q Dl_317451_;
 NI16 oldStderrAttr_ZXyw45dCi8lkCMLSUcaIBw;
 STRING_LITERAL(TM_CN3raB9atujkEiPpxYAdlgQ_4, "kernel32", 8);
 STRING_LITERAL(TM_CN3raB9atujkEiPpxYAdlgQ_5, "kernel32", 8);
@@ -83,7 +83,7 @@ N_LIB_PRIVATE N_NIMCALL(NI16, getAttributes_PnaHeFPQ8QlJWgnEjaRyCg)(NI h) {
 	{
 		NI32 T3_;
 		T3_ = (NI32)0;
-		T3_ = Dl_335451_(h, (&c));
+		T3_ = Dl_317451_(h, (&c));
 		if (!!((T3_ == ((NI32) 0)))) goto LA4_;
 		result = c.wAttributes;
 		goto BeforeRet_;
@@ -112,7 +112,7 @@ N_LIB_PRIVATE N_NIMCALL(NI, terminalWidthIoctl_9aOa3g2MGQEFvKhMvhVNbqw)(NI* hand
 				{
 					NI32 T6_;
 					T6_ = (NI32)0;
-					T6_ = Dl_335451_(h, (&csbi));
+					T6_ = Dl_317451_(h, (&csbi));
 					if (!!((T6_ == ((NI32) 0)))) goto LA7_;
 					result = ((NI) ((NI16)((NI16)(csbi.srWindow.Right - csbi.srWindow.Left) + ((NI16) 1))));
 					goto BeforeRet_;
@@ -157,11 +157,11 @@ NIM_EXTERNC N_NOINLINE(void, stdlib_terminalInit000)(void) {
 			NI T5_;
 			NI32 T6_;
 			T4_ = (NI)0;
-			T4_ = Dl_335449_();
+			T4_ = Dl_317449_();
 			T5_ = (NI)0;
-			T5_ = Dl_335449_();
+			T5_ = Dl_317449_();
 			T6_ = (NI32)0;
-			T6_ = Dl_335439_(T4_, hStdoutTemp_Frgc1hZhHtHmhQpuiOhypw, T5_, (&hStdout_Q6LBG8sK28zNgldP5VHBBA), ((NI32) 0), ((NI32) 1), ((NI32) 2));
+			T6_ = Dl_317439_(T4_, hStdoutTemp_Frgc1hZhHtHmhQpuiOhypw, T5_, (&hStdout_Q6LBG8sK28zNgldP5VHBBA), ((NI32) 0), ((NI32) 1), ((NI32) 2));
 			if (!(T6_ == ((NI32) 0))) goto LA7_;
 		}
 		LA7_: ;
@@ -171,11 +171,11 @@ NIM_EXTERNC N_NOINLINE(void, stdlib_terminalInit000)(void) {
 			NI T12_;
 			NI32 T13_;
 			T11_ = (NI)0;
-			T11_ = Dl_335449_();
+			T11_ = Dl_317449_();
 			T12_ = (NI)0;
-			T12_ = Dl_335449_();
+			T12_ = Dl_317449_();
 			T13_ = (NI32)0;
-			T13_ = Dl_335439_(T11_, hStderrTemp_lkKJFEg9bMgFJ9bv6dAcceSQ, T12_, (&hStderr_6C9cOGHD37RMptVLFSz9ckEQ), ((NI32) 0), ((NI32) 1), ((NI32) 2));
+			T13_ = Dl_317439_(T11_, hStderrTemp_lkKJFEg9bMgFJ9bv6dAcceSQ, T12_, (&hStderr_6C9cOGHD37RMptVLFSz9ckEQ), ((NI32) 0), ((NI32) 1), ((NI32) 2));
 			if (!(T13_ == ((NI32) 0))) goto LA14_;
 		}
 		LA14_: ;
@@ -187,8 +187,8 @@ NIM_EXTERNC N_NOINLINE(void, stdlib_terminalInit000)(void) {
 NIM_EXTERNC N_NOINLINE(void, stdlib_terminalDatInit000)(void) {
 if (!((TM_CN3raB9atujkEiPpxYAdlgQ_2 = nimLoadLibrary((NimStringDesc*) &TM_CN3raB9atujkEiPpxYAdlgQ_4))
 )) nimLoadLibraryError((NimStringDesc*) &TM_CN3raB9atujkEiPpxYAdlgQ_5);
-	Dl_335439_ = (tyProc_oew1DfaGl5XhHmnBK0HYXQ) nimGetProcAddr(TM_CN3raB9atujkEiPpxYAdlgQ_2, "DuplicateHandle");
-	Dl_335449_ = (tyProc_uryidYWkntM7ddjZSyxvyQ) nimGetProcAddr(TM_CN3raB9atujkEiPpxYAdlgQ_2, "GetCurrentProcess");
-	Dl_335451_ = (tyProc_vjGHiWUJwFzOgSxDffBb6Q) nimGetProcAddr(TM_CN3raB9atujkEiPpxYAdlgQ_2, "GetConsoleScreenBufferInfo");
+	Dl_317439_ = (tyProc_oew1DfaGl5XhHmnBK0HYXQ) nimGetProcAddr(TM_CN3raB9atujkEiPpxYAdlgQ_2, "DuplicateHandle");
+	Dl_317449_ = (tyProc_uryidYWkntM7ddjZSyxvyQ) nimGetProcAddr(TM_CN3raB9atujkEiPpxYAdlgQ_2, "GetCurrentProcess");
+	Dl_317451_ = (tyProc_vjGHiWUJwFzOgSxDffBb6Q) nimGetProcAddr(TM_CN3raB9atujkEiPpxYAdlgQ_2, "GetConsoleScreenBufferInfo");
 }
 

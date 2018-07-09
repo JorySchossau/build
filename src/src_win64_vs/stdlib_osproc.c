@@ -197,7 +197,7 @@ N_NIMCALL(void, echoBinSafe)(NimStringDesc** args, NI argsLen_0);
 N_LIB_PRIVATE N_NIMCALL(NI16*, newWideCString_5MZejmOlax3zMdT70vGfSQ)(NCSTRING s);
 N_LIB_PRIVATE N_NIMCALL(NI16*, newWideCString_q1KqU6WAugdPW0cwGMbUug)(NCSTRING source, NI L);
 static N_INLINE(void, fileClose_s9aNEcfRNr6spr6kxfw4GLAosproc)(NI h);
-static N_INLINE(NIM_BOOL, eqeq__9ccNWqrTIE9bcAqE2Q0ro7zgnre)(NCSTRING x, NCSTRING y);
+static N_INLINE(NIM_BOOL, eqeq__9ccNWqrTIE9bcAqE2Q0ro7zgosproc)(NCSTRING x, NCSTRING y);
 N_LIB_PRIVATE N_NOCONV(void, dealloc_RCjNtRnHdRYntrcE7YtwWw)(void* p);
 N_LIB_PRIVATE N_NIMCALL(void, nospclose)(tyObject_ProcessObj_NHqciQYh8G1aN2n273mmYw* p);
 N_LIB_PRIVATE N_NIMCALL(NimStringDesc*, nsuFormatSingleElem)(NimStringDesc* formatstr, NimStringDesc* a);
@@ -518,7 +518,7 @@ static N_INLINE(void, fileClose_s9aNEcfRNr6spr6kxfw4GLAosproc)(NI h) {
 	LA3_: ;
 }
 
-static N_INLINE(NIM_BOOL, eqeq__9ccNWqrTIE9bcAqE2Q0ro7zgnre)(NCSTRING x, NCSTRING y) {
+static N_INLINE(NIM_BOOL, eqeq__9ccNWqrTIE9bcAqE2Q0ro7zgosproc)(NCSTRING x, NCSTRING y) {
 	NIM_BOOL result;
 	result = (NIM_BOOL)0;
 	{
@@ -715,7 +715,7 @@ N_LIB_PRIVATE N_NIMCALL(tyObject_ProcessObj_NHqciQYh8G1aN2n273mmYw*, nospstartPr
 	{
 		NIM_BOOL T54_;
 		T54_ = (NIM_BOOL)0;
-		T54_ = eqeq__9ccNWqrTIE9bcAqE2Q0ro7zgnre(e.Field0, NIM_NIL);
+		T54_ = eqeq__9ccNWqrTIE9bcAqE2Q0ro7zgosproc(e.Field0, NIM_NIL);
 		if (!!(T54_)) goto LA55_;
 		dealloc_RCjNtRnHdRYntrcE7YtwWw(((void*) (e.Field0)));
 	}

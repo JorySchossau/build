@@ -297,7 +297,7 @@ N_LIB_PRIVATE N_NIMCALL(void, write_OG3BP9aaTiau0tBdonibGTg)(FILE* f, NimStringD
 N_NIMCALL(void, unsureAsgnRef)(void** dest, void* src);
 N_LIB_PRIVATE N_NIMCALL(NimStringDesc*, nsuToLowerAsciiStr)(NimStringDesc* s);
 static N_INLINE(NIM_BOOL, eqStrings)(NimStringDesc* a, NimStringDesc* b);
-static N_INLINE(NIM_BOOL, equalMem_fmeFeLBvgmAHG9bC8ETS9bYQnre)(void* a, void* b, NI size);
+static N_INLINE(NIM_BOOL, equalMem_fmeFeLBvgmAHG9bC8ETS9bYQsystem)(void* a, void* b, NI size);
 N_NIMCALL(NI, hashString)(NimStringDesc* s);
 TNimType NTI_QVcnYYRJHH6P2DXl8CegPg_;
 extern TNimType NTI_77mFvmsOLKik79ci2hXkHEg_;
@@ -611,7 +611,7 @@ appendString(T13_, (*dst));
 	return result;
 }
 
-static N_INLINE(NIM_BOOL, equalMem_fmeFeLBvgmAHG9bC8ETS9bYQnre)(void* a, void* b, NI size) {
+static N_INLINE(NIM_BOOL, equalMem_fmeFeLBvgmAHG9bC8ETS9bYQsystem)(void* a, void* b, NI size) {
 	NIM_BOOL result;
 	int T1_;
 	result = (NIM_BOOL)0;
@@ -646,7 +646,7 @@ static N_INLINE(NIM_BOOL, eqStrings)(NimStringDesc* a, NimStringDesc* b) {
 	T11_ = (NIM_BOOL)0;
 	T11_ = ((*a).Sup.len == (*b).Sup.len);
 	if (!(T11_)) goto LA12_;
-	T11_ = equalMem_fmeFeLBvgmAHG9bC8ETS9bYQnre(((void*) ((*a).data)), ((void*) ((*b).data)), ((NI) ((*a).Sup.len)));
+	T11_ = equalMem_fmeFeLBvgmAHG9bC8ETS9bYQsystem(((void*) ((*a).data)), ((void*) ((*b).data)), ((NI) ((*a).Sup.len)));
 	LA12_: ;
 	result = T11_;
 	goto BeforeRet_;
