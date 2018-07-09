@@ -222,7 +222,7 @@ proc recursivelyBuildAffectiveDAG(affDAG:var Table[string,Dependency], file:stri
         recursivelyBuildAffectiveDAG(affDAG, dependency, traceNodes)
     traceNodes.delete traceNodes.len-1 ## pop the current level off before recursing back up
 
-proc flagChangedFilesToBeCompmiled(affDAG:var Table[string,Dependency], forceAll:bool = false) =
+proc flagChangedFilesToBeCompiled(affDAG:var Table[string,Dependency], forceAll:bool = false) =
     ## Set their dirty flags true iff source files are newer than object files (if object files exist)
     var pathobj:string
     if forceAll: ## if user asked to recompile all object files, then mark all as drity
@@ -342,7 +342,7 @@ proc build(source:seq[string], o:string = "{source name}", compiler:string = "de
     addFileAndDependencies( pathInProject(dir / name & ext) )
     var traceNodes = newSeq[string]()
     recursivelyBuildAffectiveDAG(affDAG, rootFileMain.changeFileExt(""), traceNodes)
-    flagChangedFilesToBeCompmiled(affDAG, force)
+    flagChangedFilesToBeCompiled(affDAG, force)
     compileAffectiveDAG(rootFileMain.changeFileExt(""), targetName)
     echo "done"
 
