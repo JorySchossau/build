@@ -25,9 +25,9 @@ The above commannd automatically discovers dependencies from recursively inspect
 
 ### Motivation
 
-* We needed a custom build tool aware of project structure
-* We wanted to avoid dependencies (python, ninja, basil, etc.)
-* the Ninja build system takes too long to do automtaic dependency discovery
+* We needed a custom build tool aware of project structure for a different project
+* We wanted to avoid dependencies (python, ninja, basil, etc.) to ease end developer experience
+* The Ninja build system takes too long to do automtaic dependency discovery (well, the compilers take too long to report this)
 
 ### Notes
 
