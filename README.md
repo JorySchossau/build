@@ -11,29 +11,36 @@ It's easy, even for large projects!: `./build topLevelMain.cpp -o MyApp.exe`
 * Automatically Discovers and uses the available compiler: Visual Studio, GCC, Clang, whichever is available
 * Provided as C source code
 * Only a C compmiler is needed
+* Compiles with a single CLI script on any computer
 
 ### QuickStart
 
-Build the `build` tool using your system's c compiler.
-Helper scripts in the root folder are provided for Mac/Win/Linux (assuming you have a c compiler).
-Run them as `bash build_linux_gcc.sh` for example.
+*Build the `build` tool using your system's c compiler.*
 
+On Windows
+`cmd /c build.bat`
+
+On Linux or Mac
+`bash build.sh`
+
+Usage Help
 `./build -h` shows the help.
+`build.exe -h` if on windows
 
-Example
+Usage Example
 `./build ../myproj/main.cpp -o myproj.exe --cflags "-std=c++14" --lflags "-pthread"`
-The above commannd automatically discovers dependencies from recursively inspecting `main.cpp` and builds them using as many cores
+The above commannd automatically discovers dependencies from recursively inspecting `main.cpp` and builds them using as many threads as your hardware supports.
 
 ### Motivation
 
-* We needed a custom build tool aware of project structure for a different project
+* We needed a custom build tool aware of project structure for another reason
 * We wanted to avoid dependencies (python, ninja, basil, etc.) to ease end developer experience
-* The Ninja build system takes too long to do automtaic dependency discovery (well, the compilers take too long to report this)
+* The Ninja build system takes too long to do automtaic dependency discovery
 
 ### Notes
 
-* The `src` dir contains preconfigured sources for each system (Mac,Win,Linux) and flavors of compiler setups in those systems.
-* The `metasrc` dir contains the original nim sourcecode.
+* The `src` dir contains the C sources for each possible system
+* The `metasrc` dir contains the original nim sourcecode
 
 ### To Do
 
