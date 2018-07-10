@@ -18,7 +18,7 @@ It's easy, even for large projects!: `./build topLevelMain.cpp -o MyApp.exe`
 *Build the `build` tool using your system's c compiler.*
 
 On Windows
-`cmd /c build.bat`
+`cmd /c build.bat` (even works from within msys2 or gitbash)
 
 On Linux or Mac
 `bash build.sh`
