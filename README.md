@@ -10,7 +10,7 @@ It's easy, even for large projects!: `./build topLevelMain.cpp -o MyApp.exe`
 * Performs parallel builds based on total available cores
 * Automatically Discovers and uses the available compiler: Visual Studio, GCC, Clang, whichever is available
 * Provided as C source code
-* Only a C compmiler is needed
+* Only a C compiler is needed
 * Compiles with a single CLI script on any computer
 
 ### QuickStart
