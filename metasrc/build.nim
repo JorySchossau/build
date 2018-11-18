@@ -6,8 +6,6 @@ import locks
 import osproc
 import ospaths ## changeFileExt
 import os ## paramStr, walkFiles, sleep
-## TODO: rename flags to cflags
-## TODO: rename linkFlags to lflags
 
 var
     threads:seq[Thread[tuple[compiler,cflags,maindir,srcfile,objdir,objfile:string,threadi:int]]]
@@ -24,7 +22,7 @@ type
         compilable:bool
         dirty:bool
         dependencies:seq[string] ## All {D,d}ependencies are stored as projectPath&baseName: 'SubDirInProj/ThisFile' (no ext)
-var threadlock: TLock
+var threadlock: Lock
 var threadStatus: seq[range[0..1]]
 var deps = initTable[string, Dependency]()
 var affDAG = initTable[string, Dependency]()
@@ -59,7 +57,7 @@ template pathInProject(path:string):string =
     filepath.delete(0,projpath.len-1)
     filepath
 
-################### compiler detection code below vvvvvvv
+# compiler detection code below vvvvvvv
 proc saveCachedEnvVars(vars:TableRef[string,string]) =
     var file = open(getAppDir() / ".cachedvcc", fmWrite)
     for key,val in vars.mpairs():
@@ -72,7 +70,12 @@ proc loadCachedEnvVars() =
         for line in splitLines(contents.strip()):
             putEnv( line.split('=')[0], line.split('=')[1] )
 
-let possibleVcVars = ["""C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat""","""C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\amd64\vcvars64.bat"""]
+let possibleVcVars =
+  ["""C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Auxiliary\Build\vcvars64.bat""",
+  """C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat""",
+  """C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvars64.bat""",
+  """C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat""",
+  """C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\amd64\vcvars64.bat"""]
 let possibleNixCompilers = ["gcc","g++","c++","clang"]
 proc getAvailableCompilers():seq[string] =
     result = newSeq[string]()
@@ -109,12 +112,12 @@ proc prepareVCCenvironment() =
         loadCachedEnvVars()
     if execCmdEx("where cl")[1] != 0:
         echo "No VCC environment cached. Caching VCC environment..."
-        var cmd:string = nil
+        var cmd:string
         for vcvars in possibleVcVars:
             if existsFile vcvars:
                 cmd = vcvars
                 break
-        ## TODO: if cmd == nil, then tell user they need to specify the path on the command line
+        ## TODO: if cmd == "", then tell user they need to specify the path on the command line
         var output = execProcess(cmd & " && set")
         var vars = newTable[string,string]()
         for line in splitLines output:
@@ -126,13 +129,13 @@ proc prepareVCCenvironment() =
     if execCmdEx("where cl")[1] != 0:
         echo "Error: VCC environment unable to be found or loaded."
         quit()
-###################### compiler detection code above ^^^^^^^^^^^^^^
+# compiler detection code above ^^^^^^^^^^^^^^
 
 proc buildThread(args:tuple[compiler,cflags,maindir,srcfile,objdir,objfile:string,threadi:int]) {.thread.} =
     let localBuildString = makeCompileToObjString(args.compiler, args.cflags, args.maindir / args.srcfile, args.objdir / args.objfile)
     let localDisplayString = makeCompileToObjString(args.compiler, args.cflags, args.srcfile, args.objfile)
     echo localDisplayString
-    let (stdout, stderr) = execCmdEx localBuildString
+    let (stdout, stderr) = execCmdEx(localBuildString)
     if stderr != 0:
         echo stderr
         echo stdout
@@ -167,7 +170,7 @@ proc addFileAndDependencies(file:string) =
         return
     var subdeps = newSeq[string]()
     var parent = parentDir mainDir / file
-    var extOfOtherFile:string = nil ## If file is Data.h, then extOfOtherFile is cpp or c or CPP, etc.
+    var extOfOtherFile:string ## If file is Data.h, then extOfOtherFile is cpp or c or CPP, etc.
     deps[keyName] = newDependency()
     if splitFile(file)[2][0..1].toLowerAscii == ".h": ## `file` is a {h,hpp} header file
         deps[keyName].pathHeader = file
@@ -177,7 +180,7 @@ proc addFileAndDependencies(file:string) =
             if existsFile(mainDir / file.changeFileExt(ext)):
                 extOfOtherFile = ext
                 break
-        if not extOfOtherFile.isNil: ## we found a source file
+        if extOfOtherFile.len != 0: ## we found a source file
             deps[keyName].pathSource = pathInProject(mainDir / file.changeFileExt(extOfOtherFile))
             deps[keyName].filetypes.incl FileTypes.Source
             subdeps = subdeps.concat getDependencies(file.changeFileExt(extOfOtherFile))
@@ -189,7 +192,7 @@ proc addFileAndDependencies(file:string) =
             if existsFile(mainDir / file.changeFileExt(ext)):
                 extOfOtherFile = ext
                 break
-        if not extOfOtherFile.isNil: ## we found a source file
+        if extOfOtherFile.len != 0: ## we found a source file
             deps[keyName].pathHeader = pathInProject(mainDir / file.changeFileExt(extOfOtherFile))
             deps[keyName].filetypes.incl FileTypes.Header
             subdeps = subdeps.concat getDependencies(file.changeFileExt(extOfOtherFile))
@@ -207,10 +210,11 @@ proc recursivelyBuildAffectiveDAG(affDAG:var Table[string,Dependency], file:stri
     discard affDAG.hasKeyOrPut(file, newDependency())
     affDAG[file].pathSource = deps[file].pathSource
     affDAG[file].pathHeader = deps[file].pathHeader
+    #echo fmt"DAGC:[{affDAG[file].pathSource},{affDAG[file].pathHeader}]"
     if traceNodes.len == 0:
         affDAG[file].compilable = true
         affDAG[file].dirty = false
-    if affDAG[file].pathSource != "" and affDAG[file].pathHeader != "":
+    if affDAG[file].pathSource.len != 0 and affDAG[file].pathHeader.len != 0:
         affDAG[file].compilable = true
         affDAG[file].dirty = false
     for affectedNode in traceNodes:
@@ -297,7 +301,7 @@ proc build(source:seq[string], o:string = "{source name}", compiler:string = "de
     initLock(threadlock)
     threads = newSeq[Thread[tuple[compiler,cflags,maindir,srcfile,objdir,objfile:string,threadi:int]]](processorCount)
 
-    ## compiler detection code below
+    # compiler detection code below
     var desiredCompiler = if compiler == "default": "" else: compiler
     var decidedCompiler:string = ""
     let availableCompilers = getAvailableCompilers()
@@ -325,11 +329,11 @@ proc build(source:seq[string], o:string = "{source name}", compiler:string = "de
     if decidedCompiler == "vcc":
         prepareVCCenvironment()
         objExt = "obj"
-    ## THIS PART IS JUST FOR TESTING
+    # THIS PART IS JUST FOR TESTING
 
-    ## source file compile code below
+    # source file compile code below
     buildCompiler = if decidedCompiler == "default": "g++" else: decidedCompiler
-    echo "cflags: "&cflags
+    #echo "cflags: "&cflags
     buildFlags = cflags
     buildLinkFlags = lflags
     echo fmt"compiling source tree of {targetName} using {processorCount} cores"
@@ -348,7 +352,7 @@ proc build(source:seq[string], o:string = "{source name}", compiler:string = "de
 when isMainModule:
     import cligen; dispatch(build, help = {"source":"Root source file (ex: main.cpp)",
     "o":"resulting executable name",
-    "compiler":"altnerative compiler ex: \"clang\"",
+    "compiler":"alternative compiler ex: \"clang\",\"vcc\",\"gcc\"",
     "cflags":"define extra cflags for the build process ex: \"-std=c++14 -O3\"",
     "lflags":"define extra lflags for the build process ex: \"-lpthreads\"",
     "force":"perform a full recompile of all source files"},
