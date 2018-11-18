@@ -308,7 +308,7 @@ proc compileAffectiveDAG(rootDep, targetName:string) =
         quit()
 
 # main() equivalent, it is passed command line params automatically by the cligen module
-proc build(source:seq[string], o:string = "{source name}", compiler:string = "default", cflags:string = "", lflags:string = "", threads:int = 0, force:bool = false) =
+proc build*(source:seq[string], o:string = "{source name}", compiler:string = "default", cflags:string = "", lflags:string = "", threads:int = 0, force:bool = false) =
     if source.len < 1:
         echo "root source file (ex: main.cpp) name required parameters"
         quit()
