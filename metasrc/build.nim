@@ -8,7 +8,7 @@ import ospaths ## changeFileExt
 import os ## paramStr, walkFiles, sleep
 
 var
-    threads:seq[Thread[tuple[compiler,cflags,maindir,srcfile,objdir,objfile:string,threadi:int]]]
+    allthreads:seq[Thread[tuple[compiler,cflags,maindir,srcfile,objdir,objfile:string,threadi:int]]]
 type
     FileTypes {.pure.} = enum
         Header, Source
@@ -27,9 +27,9 @@ var threadStatus: seq[range[0..1]]
 var deps = initTable[string, Dependency]()
 var affDAG = initTable[string, Dependency]()
 var dirCache = initTable[string, seq[tuple[fullpath:string,ext:string]]]() ## cache contents of each directory
-let processorCount = countProcessors()
-var availableThreads = processorCount
-var runningThreads = 0 ## availableThreads + runningThreads = processorCount
+var processorCount:int
+var availableThreads:int
+var runningThreads = 0 # availableThreads + runningThreads = processorCount
 var successfulCompilations = 0
 var mainDir:string
 var mainDirRelative:string
@@ -136,6 +136,9 @@ proc buildThread(args:tuple[compiler,cflags,maindir,srcfile,objdir,objfile:strin
     let localDisplayString = makeCompileToObjString(args.compiler, args.cflags, args.srcfile, args.objfile)
     echo localDisplayString
     let (stdout, stderr) = execCmdEx(localBuildString)
+    acquire threadlock
+    echo "thread $1 finished" % [$args.threadi]
+    release threadlock
     if stderr != 0:
         echo stderr
         echo stdout
@@ -276,7 +279,7 @@ proc compileAffectiveDAG(rootDep, targetName:string) =
                 affDAG[compilee].dirty = false
                 threadStatus[nextEmptyThreadIndex] = 1
                 oname = changeFileExt(deps[compilee].pathSource,"o").replace($DirSep,"_")
-                createThread(threads[nextEmptyThreadIndex], buildThread, (buildCompiler, buildFlags, mainDirRelative, deps[compilee].pathSource, objDir, oname, nextEmptyThreadIndex))
+                createThread(allthreads[nextEmptyThreadIndex], buildThread, (buildCompiler, buildFlags, mainDirRelative, deps[compilee].pathSource, objDir, oname, nextEmptyThreadIndex))
                 inc runningThreads
                 dec availableThreads
                 deps[compilee].started = true
@@ -291,7 +294,7 @@ proc compileAffectiveDAG(rootDep, targetName:string) =
         echo stdout
         quit()
 
-proc build(source:seq[string], o:string = "{source name}", compiler:string = "default", cflags:string = "", lflags:string = "", force:bool = false) =
+proc build(source:seq[string], o:string = "{source name}", compiler:string = "default", cflags:string = "", lflags:string = "", threads:int = 0, force:bool = false) =
     if source.len < 1:
         echo "root source file (ex: main.cpp) name required parameters"
         quit()
@@ -299,7 +302,9 @@ proc build(source:seq[string], o:string = "{source name}", compiler:string = "de
     let rootFileMain = name & ext
     let targetName = if o == "{source name}": name else: o
     initLock(threadlock)
-    threads = newSeq[Thread[tuple[compiler,cflags,maindir,srcfile,objdir,objfile:string,threadi:int]]](processorCount)
+    processorCount = if threads == 0: countProcessors() else: threads
+    availableThreads = processorCount
+    allthreads = newSeq[Thread[tuple[compiler,cflags,maindir,srcfile,objdir,objfile:string,threadi:int]]](processorCount)
 
     # compiler detection code below
     var desiredCompiler = if compiler == "default": "" else: compiler
@@ -336,7 +341,7 @@ proc build(source:seq[string], o:string = "{source name}", compiler:string = "de
     #echo "cflags: "&cflags
     buildFlags = cflags
     buildLinkFlags = lflags
-    echo fmt"compiling source tree of {targetName} using {processorCount} cores"
+    echo fmt"compiling source tree of {targetName} using {processorCount} threads"
     threadStatus = newSeq[range[0..1]](processorCount)
     mainDir = parentDir expandFilename dir / name & ext
     mainDirRelative = splitPath(dir / rootFileMain).head
@@ -355,5 +360,6 @@ when isMainModule:
     "compiler":"alternative compiler ex: \"clang\",\"vcc\",\"gcc\"",
     "cflags":"define extra cflags for the build process ex: \"-std=c++14 -O3\"",
     "lflags":"define extra lflags for the build process ex: \"-lpthreads\"",
+    "threads":"number of parallel builds to perform",
     "force":"perform a full recompile of all source files"},
-    short = {"cflags":'c',"lflags":'l',"compiler":'C'})
+    short = {"cflags":'c',"lflags":'l',"compiler":'C',"threads":'j'})
