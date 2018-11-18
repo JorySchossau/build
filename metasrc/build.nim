@@ -57,26 +57,32 @@ template pathInProject(path:string):string =
     filepath.delete(0,projpath.len-1)
     filepath
 
-# compiler detection code below vvvvvvv
+# compiler detection: vcc: save vcc environment vars to cache file so it's faster in the future
 proc saveCachedEnvVars(vars:TableRef[string,string]) =
     var file = open(getAppDir() / ".cachedvcc", fmWrite)
     for key,val in vars.mpairs():
         file.writeLine fmt"{key}={val}"
     file.close()
 
+# compiler detection: vcc: read vcc environment vars from cache file so it's faster
 proc loadCachedEnvVars() =
     if existsFile getAppDir() / ".cachedvcc":
         let contents = readFile getAppDir() / ".cachedvcc"
         for line in splitLines(contents.strip()):
             putEnv( line.split('=')[0], line.split('=')[1] )
 
+# compiler detection: vcc: locations to look for vcvars64.bat
 let possibleVcVars =
   ["""C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\VC\Auxiliary\Build\vcvars64.bat""",
   """C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat""",
   """C:\Program Files (x86)\Microsoft Visual Studio\2017\Enterprise\VC\Auxiliary\Build\vcvars64.bat""",
   """C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat""",
   """C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\amd64\vcvars64.bat"""]
+
+# compiler detection: non-vcc: c++ executables to search for
 let possibleNixCompilers = ["gcc","g++","c++","clang"]
+
+# compiler detection: non-vcc: return a list of all available c++ compilers
 proc getAvailableCompilers():seq[string] =
     result = newSeq[string]()
     var which:string = "which"
@@ -88,15 +94,17 @@ proc getAvailableCompilers():seq[string] =
     for compiler in possibleNixCompilers:
         if execCmdEx(fmt"{which} {compiler}")[1] == 0: result.add compiler
 
+# compiler helper: return well-formatted executable string to make object code, combining compiler, files, and flags
 template makeCompileToObjString(compiler,flags,src,obj:string):string =
     var result:string
     case compiler:
         of "vcc":
             result = "cl $1 /c /Fo$2 $3" % [flags,obj.changeFileExt("obj"),src] ## TODO: allow debug builds
         of "c++","g++","clang","gcc":
-            result = "$1 $2 -o $3 -c $4" % [compiler, flags, obj, src] ## TODO: allow c++14 flags or alternatives
+            result = "$1 $2 -o $3 -c $4" % [compiler, flags, obj, src]
     result
 
+# compiler helper: any: return well-formatted executable string to link to executable, combining compiler, files, and flags
 template makeCompileToExeString(compiler,linkFlags,targetFile,objdir:string):string =
     var result:string
     case compiler:
@@ -104,9 +112,10 @@ template makeCompileToExeString(compiler,linkFlags,targetFile,objdir:string):str
             result = "link $1 $2 /out:$3" % [linkFlags, objdir / "*.obj", targetFile] ## TODO: allow debug builds AND linker flags
             echo result
         of "c++","g++","clang","gcc":
-            result = "$1 -o $2 $3 $4" % [compiler, targetFile, objdir / "*.o", linkFlags] ## TODO: allow c++14 flags or alternatives
+            result = "$1 -o $2 $3 $4" % [compiler, targetFile, objdir / "*.o", linkFlags]
     result
 
+# compiler helper: vcc: loads vcc environment vars
 proc prepareVCCenvironment() =
     if existsFile getAppDir() / ".cachedvcc":
         loadCachedEnvVars()
@@ -117,7 +126,6 @@ proc prepareVCCenvironment() =
             if existsFile vcvars:
                 cmd = vcvars
                 break
-        ## TODO: if cmd == "", then tell user they need to specify the path on the command line
         var output = execProcess(cmd & " && set")
         var vars = newTable[string,string]()
         for line in splitLines output:
@@ -129,8 +137,8 @@ proc prepareVCCenvironment() =
     if execCmdEx("where cl")[1] != 0:
         echo "Error: VCC environment unable to be found or loaded."
         quit()
-# compiler detection code above ^^^^^^^^^^^^^^
 
+# fn thread to build a single source file to obj file
 proc buildThread(args:tuple[compiler,cflags,maindir,srcfile,objdir,objfile:string,threadi:int]) {.thread.} =
     let localBuildString = makeCompileToObjString(args.compiler, args.cflags, args.maindir / args.srcfile, args.objdir / args.objfile)
     let localDisplayString = makeCompileToObjString(args.compiler, args.cflags, args.srcfile, args.objfile)
@@ -152,6 +160,7 @@ proc buildThread(args:tuple[compiler,cflags,maindir,srcfile,objdir,objfile:strin
         threadStatus[args.threadi] = 0
     release threadlock
 
+# crawl a single file for its listed dependencies
 proc getDependencies(file:string):seq[string] =
     result = newSeq[string]()
     var subline:string
@@ -167,6 +176,7 @@ proc getDependencies(file:string):seq[string] =
                     pos2 = subline.find('"', 1)
                     result.add( pathInProject(mainDir / file.splitPath.head / subline[pos1 ..< pos2]) )
 
+# get and store ALL explicit and implicit dependencies for a file
 proc addFileAndDependencies(file:string) =
     var keyName = file.splitFile[0] / file.splitFile[1] ## parent dir / name (no extension)
     if deps.contains keyName:
@@ -205,6 +215,7 @@ proc addFileAndDependencies(file:string) =
             addFileAndDependencies(projectPathSubDepName)
     #echo fmt"{file}: {$subdeps}"
 
+# recursively build a directed acyclic graph of file dependencies
 proc recursivelyBuildAffectiveDAG(affDAG:var Table[string,Dependency], file:string, traceNodes:var seq[string]) =
     ## file: current file we're crawling in the dependency DAG
     ## affDAG: the affective DAG we're building (modifying file x will affect files a,b, and c downstream in the compile process)
@@ -228,6 +239,7 @@ proc recursivelyBuildAffectiveDAG(affDAG:var Table[string,Dependency], file:stri
         recursivelyBuildAffectiveDAG(affDAG, dependency, traceNodes)
     traceNodes.delete traceNodes.len-1 ## pop the current level off before recursing back up
 
+# search all stored files and compare possible ojb file timestamp to know if we need to recompile the source file
 proc flagChangedFilesToBeCompiled(affDAG:var Table[string,Dependency], forceAll:bool = false) =
     ## Set their dirty flags true iff source files are newer than object files (if object files exist)
     var pathobj:string
@@ -253,6 +265,7 @@ proc flagChangedFilesToBeCompiled(affDAG:var Table[string,Dependency], forceAll:
                         for eachSubDep in eachDep.dependencies:
                             if affDAG[eachSubDep].compilable: affDAG[eachSubDep].dirty = true
     
+# run through the directed acyclic graph and compile all files
 proc compileAffectiveDAG(rootDep, targetName:string) =
     var compilee:string
     var nextEmptyThreadIndex:int
@@ -294,6 +307,7 @@ proc compileAffectiveDAG(rootDep, targetName:string) =
         echo stdout
         quit()
 
+# main() equivalent, it is passed command line params automatically by the cligen module
 proc build(source:seq[string], o:string = "{source name}", compiler:string = "default", cflags:string = "", lflags:string = "", threads:int = 0, force:bool = false) =
     if source.len < 1:
         echo "root source file (ex: main.cpp) name required parameters"
@@ -338,7 +352,6 @@ proc build(source:seq[string], o:string = "{source name}", compiler:string = "de
 
     # source file compile code below
     buildCompiler = if decidedCompiler == "default": "g++" else: decidedCompiler
-    #echo "cflags: "&cflags
     buildFlags = cflags
     buildLinkFlags = lflags
     echo fmt"compiling source tree of {targetName} using {processorCount} threads"
