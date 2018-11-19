@@ -4,28 +4,29 @@ import tables
 import strformat
 import locks
 import osproc
-import ospaths ## changeFileExt
-import os ## paramStr, walkFiles, sleep
+import ospaths # changeFileExt
+import os # paramStr, walkFiles, sleep
+import nuuid # generateUUID()
 
 var
     allthreads:seq[Thread[tuple[compiler,cflags,maindir,srcfile,objdir,objfile:string,threadi:int]]]
 type
-    FileTypes {.pure.} = enum
+    FileTypes* {.pure.} = enum
         Header, Source
-    Dependency = ref object
-        filetypes:set[FileTypes]
-        pathSource,pathHeader:string
-        dirSource,dirHeader:string
-        #uuidSource,uuidHeader:string
-        started:bool
-        finished:bool
-        compilable:bool
-        dirty:bool
-        dependencies:seq[string] ## All {D,d}ependencies are stored as projectPath&baseName: 'SubDirInProj/ThisFile' (no ext)
+    Dependency* = ref object
+        filetypes*:set[FileTypes]
+        pathSource*,pathHeader*:string
+        dirSource*,dirHeader*:string
+        uuidSource*,uuidHeader*:string
+        started*:bool
+        finished*:bool
+        compilable*:bool
+        dirty*:bool
+        dependencies*:seq[string] ## All {D,d}ependencies are stored as projectPath&baseName: 'SubDirInProj/ThisFile' (no ext)
 var threadlock: Lock
 var threadStatus: seq[range[0..1]]
 var deps = initTable[string, Dependency]()
-var affDAG = initTable[string, Dependency]()
+var affDAG* = initTable[string, Dependency]()
 var dirCache = initTable[string, seq[tuple[fullpath:string,ext:string]]]() ## cache contents of each directory
 var processorCount:int
 var availableThreads:int
@@ -38,6 +39,12 @@ var buildCompiler:string
 var buildFlags:string
 var buildLinkFlags:string
 
+template `$`*(d:Dependency):string =
+  d.pathSource&","&d.pathHeader
+
+proc newXcodeUUID():string =
+  result = join(generateUUID().toUpper().split('-')[1 .. ^1])
+
 proc newDependency():Dependency =
     new result
     result.pathSource = ""
@@ -49,6 +56,8 @@ proc newDependency():Dependency =
     result.finished = false
     result.compilable = false
     result.dirty = false
+    result.uuidSource = ""
+    result.uuidHeader = ""
 
 template native(path:string):string = unixToNativePath(path)
 template pathInProject(path:string):string =
@@ -224,6 +233,9 @@ proc recursivelyBuildAffectiveDAG(affDAG:var Table[string,Dependency], file:stri
     discard affDAG.hasKeyOrPut(file, newDependency())
     affDAG[file].pathSource = deps[file].pathSource
     affDAG[file].pathHeader = deps[file].pathHeader
+    affDAG[file].filetypes = deps[file].filetypes
+    affDAG[file].uuidSource = deps[file].uuidSource
+    affDAG[file].uuidHeader = deps[file].uuidHeader
     #echo fmt"DAGC:[{affDAG[file].pathSource},{affDAG[file].pathHeader}]"
     if traceNodes.len == 0:
         affDAG[file].compilable = true
@@ -306,6 +318,15 @@ proc compileAffectiveDAG(rootDep, targetName:string) =
         echo stderr
         echo stdout
         quit()
+
+proc getSourceTree*(source:string): Table[string,Dependency] =
+    let (dir, name, ext) = splitFile(source)
+    let rootFileMain = name & ext
+    mainDir = parentDir expandFilename dir / name & ext
+    addFileAndDependencies( pathInProject(dir / name & ext) )
+    var traceNodes = newSeq[string]()
+    recursivelyBuildAffectiveDAG(affDAG, rootFileMain.changeFileExt(""), traceNodes)
+    return affDAG
 
 # main() equivalent, it is passed command line params automatically by the cligen module
 proc build*(source:seq[string], o:string = "{source name}", compiler:string = "default", cflags:string = "", lflags:string = "", threads:int = 0, force:bool = false) =
